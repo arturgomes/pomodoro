@@ -1,16 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
-
+import CircularProgress, {
+  CircularProgressProps,
+} from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
 Modal.setAppElement('#root'); // define o elemento root como o elemento pai do modal
 
+
+function CircularProgressWithLabel(
+  props: CircularProgressProps & { value: number, text: string, typeCounter: boolean },
+) {
+  return (
+    <Box sx={{ position: 'relative', display: 'inline-flex', padding: '10px' }}>
+      <CircularProgress variant="determinate" {...props} color={props.typeCounter ? 'success' : 'warning'} size="300px" />
+      <Box
+        sx={{
+          top: 0,
+          left: 0,
+          bottom: 0,
+          right: 0,
+          position: 'absolute',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <span
+          className="text-white text-6xl"
+        >{`${props.text}`}</span>
+      </Box>
+    </Box>
+  );
+}
+
 function App() {
-  const [studyTime, setStudyTime] = useState(25);
-  const [breakTime, setBreakTime] = useState(5);
+  const [studyTime, setStudyTime] = useState(1);
+  const [breakTime, setBreakTime] = useState(1);
   const [timeLeft, setTimeLeft] = useState(studyTime * 60);
   const [timerActive, setTimerActive] = useState(false);
-  const [timerType, setTimerType] = useState('estudo');
-  const [showBreakModal, setShowBreakModal] = useState(false);
-  const [showStudyModal, setShowStudyModal] = useState(false);
+  const [timerType, setTimerType] = useState(true);
+  const [showReset, setShowReset] = useState(false);
 
   const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
@@ -18,14 +47,20 @@ function App() {
     return `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
+  const startTimer = () => {
+    setTimeLeft(studyTime * 60)
+    setTimerActive(!timerActive);
+    setShowReset(false)
+  };
   const toggleTimer = () => {
     setTimerActive(!timerActive);
+    setShowReset(false)
   };
 
   const resetTimer = () => {
     setTimerActive(false);
-    setTimerType('estudo');
     setTimeLeft(studyTime * 60);
+    setShowReset(true)
   };
 
   useEffect(() => {
@@ -36,56 +71,65 @@ function App() {
       }, 1000);
     } else if (timerActive && timeLeft === 0) {
       setTimerActive(false);
-      if (timerType === 'estudo') {
-        setShowBreakModal(true);
+      if (timerType) {
+        handleBreakModalClose();
       } else {
-        setShowStudyModal(true);
+        handleStudyModalClose();
       }
+
     }
     return () => clearInterval(interval);
   }, [timerActive, timeLeft, timerType]);
-
   const handleBreakModalClose = () => {
-    setShowBreakModal(false);
-    setTimerType('pausa');
+    setTimerType(timerType => !timerType);
     setTimeLeft(breakTime * 60);
     setTimerActive(true);
   };
 
   const handleStudyModalClose = () => {
-    setShowStudyModal(false);
-    setTimerType('estudo');
+    setTimerType(timerType => !timerType);
     setTimeLeft(studyTime * 60);
     setTimerActive(true);
   };
-
+  const roundTime = time => {
+    return (time * 100) / ((!timerType ? breakTime : studyTime) * 60)
+  }
   return (
-    <div className="App">
-      <h1>Temporizador Pomodoro</h1>
-      <div className="timer">
-        <h2>{timerType === 'estudo' ? 'Tempo de Estudo' : 'Tempo de Pausa'}</h2>
-        <p>{formatTime(timeLeft)}</p>
-        <button onClick={toggleTimer}>{timerActive ? 'Pausar' : 'Começar'}</button>
-        <button onClick={resetTimer}>Resetar</button>
-      </div>
-      <div className="settings">
-        <h2>Configurações</h2>
-        <label>Tempo de Estudo (minutos):</label>
-        <input type="number" min="1" value={studyTime} onChange={(e) => setStudyTime(parseInt(e.target.value))} />
-        <label>Tempo de Pausa (minutos):</label>
-        <input type="number" min="1" value={breakTime} onChange={(e) => setBreakTime(parseInt(e.target.value))} />
-      </div>
-      <Modal isOpen={showBreakModal}>
-        <h2>Hora da pausa!</h2>
-        <p>Tire uma pausa curta e volte refrescado para a próxima sessão de estudo.</p>
-        <button onClick={handleBreakModalClose}>Começar Pausa</button>
-      </Modal>
-      <Modal isOpen={showStudyModal}>
-        <h2>Hora de Estudar!</h2>
-        <p>Prepare-se para estudar novamente.</p>
-        <button onClick={handleStudyModalClose}>Começar Estudo</button>
-      </Modal>
-    </div>
+    <>
+      {!showReset && (<div className={`${timerType ? `bg-green-900` : `bg-orange-900`} p-64`}>
+        <h1>Pomodoro</h1>
+        <div className="mt-16">
+          <h2 className="text-6xl">{timerType ? 'Tempo de Estudo' : 'Tempo de Pausa'}</h2>
+          <p className="my-8">
+            <CircularProgressWithLabel value={roundTime(timeLeft)} text={formatTime(timeLeft)} typeCounter={timerType} />
+          </p>
+          <div className="flex flex-row gap-3 justify-center">
+
+            <button className="bg-blue-800 hover:bg-blue-600"
+              onClick={toggleTimer}>{timerActive ? 'Pausar' : 'Começar'}</button>
+            <button className="bg-blue-800 hover:bg-blue-600"
+              onClick={resetTimer}>Resetar</button>
+          </div>
+        </div>
+      </div>)
+      }
+      {
+        showReset && (<div className="bg-gray-900 p-64">
+          <h1>Temporizador Pomodoro</h1>
+
+          <div className="settings">
+            <h2>Configurações</h2>
+            <label>Tempo de Estudo (minutos):</label>
+            <input type="number" min="1" value={studyTime} onChange={(e) => setStudyTime(parseInt(e.target.value))} />
+            <label>Tempo de Pausa (minutos):</label>
+            <input type="number" min="1" value={breakTime} onChange={(e) => setBreakTime(parseInt(e.target.value))} />
+            <button onClick={startTimer}>Começar</button>
+
+          </div></div>)
+      }
+
+
+    </ >
   );
 }
 
