@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import Modal from 'react-modal';
+import { useState, useEffect } from 'react';
 import CircularProgress, {
   CircularProgressProps,
 } from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
-Modal.setAppElement('#root'); // define o elemento root como o elemento pai do modal
 
 
 function CircularProgressWithLabel(
@@ -96,19 +94,21 @@ function App() {
   }
   return (
     <>
-      {!showReset && (<div className={`${timerType ? `bg-green-900` : `bg-orange-900`} p-64`}>
-        <h1>Pomodoro</h1>
-        <div className="mt-16">
-          <h2 className="text-6xl">{timerType ? 'Tempo de Estudo' : 'Tempo de Pausa'}</h2>
-          <p className="my-8">
-            <CircularProgressWithLabel value={roundTime(timeLeft)} text={formatTime(timeLeft)} typeCounter={timerType} />
-          </p>
-          <div className="flex flex-row gap-3 justify-center">
+      {!showReset && (<div className={`${timerType ? `bg-green-900` : `bg-orange-900`} flex items-center justify-center h-screen w-screen`}>
+        <div className="w-96 flex flex-col items-center p-12">
+          <h1>Pomodoro</h1>
+          <div className="mt-12 flex flex-col items-center">
+            <h2 className="text-6xl text-center">{timerType ? 'Tempo de Estudo' : 'Tempo de Pausa'}</h2>
+            <p className="my-8">
+              <CircularProgressWithLabel value={roundTime(timeLeft)} text={formatTime(timeLeft)} typeCounter={timerType} />
+            </p>
+            <div className="flex flex-row gap-3 justify-center">
 
-            <button className="bg-blue-800 hover:bg-blue-600"
-              onClick={toggleTimer}>{timerActive ? 'Pausar' : 'Começar'}</button>
-            <button className="bg-blue-800 hover:bg-blue-600"
-              onClick={resetTimer}>Resetar</button>
+              <button className="bg-blue-800 hover:bg-blue-600"
+                onClick={toggleTimer}>{timerActive ? 'Pausar' : 'Começar'}</button>
+              <button className="bg-blue-800 hover:bg-blue-600"
+                onClick={resetTimer}>Resetar</button>
+            </div>
           </div>
         </div>
       </div>)
